@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyForge — Smart Study Planner</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0C0E14;--bg2:#161923;--bg3:#1E2130;--accent:#F0A500;--accent2:#00D4AA;--danger:#FF4757;--success:#2ED573;--text:#F1F2F6;--muted:#747D8C;--border:#2F3542;--purple:#A855F7;--blue:#3B82F6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh}
+h1,h2,h3,h4,h5{font-family:'Outfit',sans-serif}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* Sidebar */
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);z-index:50;transition:transform .3s ease;display:flex;flex-direction:column}
+#sidebar .logo{padding:20px;border-bottom:1px solid var(--border)}
+#sidebar .logo h2{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.3rem;color:var(--accent)}
+#sidebar .logo span{color:var(--accent2)}
+#sidebar nav{flex:1;padding:10px 0}
+#sidebar nav button{width:100%;display:flex;align-items:center;gap:12px;padding:12px 20px;border:none;background:none;color:var(--muted);font-size:.9rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;text-align:left}
+#sidebar nav button:hover{color:var(--text);background:rgba(240,165,0,.05)}
+#sidebar nav button.active{color:var(--accent);background:rgba(240,165,0,.1);border-right:3px solid var(--accent)}
+#sidebar nav button i{width:20px;text-align:center;font-size:1rem}
+#main-content{margin-left:220px;padding:24px;min-height:100vh;position:relative}
+
+/* Animated BG orbs */
+.bg-orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.08;pointer-events:none;z-index:0}
+.bg-orb-1{width:400px;height:400px;background:var(--accent);top:-100px;right:-100px;animation:float1 20s ease-in-out infinite}
+.bg-orb-2{width:300px;height:300px;background:var(--accent2);bottom:-50px;left:200px;animation:float2 25s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-80px,60px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,-80px)}}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;transition:all .3s ease}
+.card:hover{border-color:rgba(240,165,0,.3);transform:translateY(-1px)}
+.stat-card{text-align:center;padding:24px 16px}
+.stat-card .stat-value{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;line-height:1}
+.stat-card .stat-label{color:var(--muted);font-size:.8rem;margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:#d4920a;transform:translateY(-1px)}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(255,71,87,.15);color:var(--danger);border:1px solid rgba(255,71,87,.3)}
+.btn-danger:hover{background:rgba(255,71,87,.25)}
+.btn-sm{padding:6px 14px;font-size:.8rem}
+
+/* Form elements */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;transition:border-color .2s}
+.form-input:focus{outline:none;border-color:var(--accent)}
+select.form-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23747D8C' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+textarea.form-input{resize:vertical;min-height:80px}
+
+/* Difficulty badge */
+.diff-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.diff-1{background:rgba(46,213,115,.15);color:#2ED573}
+.diff-2{background:rgba(0,212,170,.15);color:#00D4AA}
+.diff-3{background:rgba(240,165,0,.15);color:#F0A500}
+.diff-4{background:rgba(255,107,107,.15);color:#FF6B6B}
+.diff-5{background:rgba(255,71,87,.15);color:#FF4757}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.active{opacity:1;pointer-events:all}
+.modal-content{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;transform:scale(.9);transition:transform .3s}
+.modal-overlay.active .modal-content{transform:scale(1)}
+
+/* Toast */
+#toast-container{position:fixed;top:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:10px;font-size:.875rem;font-weight:500;animation:slideIn .3s ease,fadeOut .3s ease 2.7s;max-width:360px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.toast-success{background:rgba(46,213,115,.15);border:1px solid rgba(46,213,115,.3);color:var(--success)}
+.toast-error{background:rgba(255,71,87,.15);border:1px solid rgba(255,71,87,.3);color:var(--danger)}
+.toast-info{background:rgba(240,165,0,.15);border:1px solid rgba(240,165,0,.3);color:var(--accent)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+
+/* XP Bar */
+.xp-bar-container{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:4px}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .5s ease}
+
+/* Timetable grid */
+.tt-grid{display:grid;grid-template-columns:80px repeat(7,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden}
+.tt-header{background:var(--bg3);padding:10px 4px;text-align:center;font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase}
+.tt-time{background:var(--bg2);padding:8px;font-size:.7rem;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.tt-cell{background:var(--bg2);padding:4px;min-height:50px;transition:background .2s}
+.tt-cell:hover{background:var(--bg3)}
+.tt-session{padding:4px 6px;border-radius:6px;font-size:.7rem;font-weight:600;margin-bottom:2px;cursor:pointer;transition:transform .2s}
+.tt-session:hover{transform:scale(1.03)}
+
+/* Effectiveness stars */
+.star-rating{display:flex;gap:2px}
+.star-rating i{cursor:pointer;color:var(--border);font-size:1rem;transition:color .2s}
+.star-rating i.active{color:var(--accent)}
+
+/* Method tag */
+.method-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:.7rem;font-weight:600;background:rgba(0,212,170,.1);color:var(--accent2)}
+
+/* Achievement */
+.achievement{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--border)}
+.achievement.unlocked{border-color:rgba(240,165,0,.4);background:rgba(240,165,0,.05)}
+.achievement-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.achievement.locked .achievement-icon{background:var(--bg3);color:var(--muted)}
+.achievement.unlocked .achievement-icon{background:rgba(240,165,0,.2);color:var(--accent)}
+
+/* Streak flame */
+.streak-flame{display:inline-block;animation:flame .5s ease-in-out infinite alternate}
+@keyframes flame{from{transform:scale(1) translateY(0)}to{transform:scale(1.1) translateY(-2px)}}
+
+/* Pulse ring */
+.pulse-ring{animation:pulseRing 2s ease-out infinite}
+@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(240,165,0,.4)}100%{box-shadow:0 0 0 15px rgba(240,165,0,0)}}
+
+/* Page transition */
+.page-enter{animation:pageIn .3s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* File upload */
+.file-upload{border:2px dashed var(--border);border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:all .2s}
+.file-upload:hover{border-color:var(--accent);background:rgba(240,165,0,.03)}
+.file-upload i{font-size:2rem;color:var(--muted);margin-bottom:8px}
+
+/* Session tip */
+.tip-box{background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.2);border-radius:10px;padding:14px;font-size:.85rem;color:var(--accent2);line-height:1.5}
+
+/* Mobile */
+#mobile-toggle{display:none;position:fixed;top:16px;left:16px;z-index:60;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:1.1rem;cursor:pointer}
+@media(max-width:768px){
+#sidebar{transform:translateX(-100%)}
+#sidebar.open{transform:translateX(0)}
+#main-content{margin-left:0;padding:16px;padding-top:60px}
+#mobile-toggle{display:block}
+.tt-grid{font-size:.65rem}
+.tt-grid{grid-template-columns:50px repeat(7,1fr)}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- Animated BG orbs -->
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<!-- Mobile menu toggle -->
+<button id="mobile-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+
+<!-- Sidebar -->
+<aside id="sidebar">
+<div class="logo">
+<h2>Study<span>Forge</span></h2>
+<p style="font-size:.7rem;color:var(--muted);margin-top:2px">Smart Study Planner</p>
+</div>
+<nav id="sidebar-nav"></nav>
+<div id="sidebar-footer" style="padding:16px;border-top:1px solid var(--border)"></div>
+</aside>
+
+<!-- Main content -->
+<div id="main-content"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+<div class="modal-content" id="modal-content"></div>
+</div>
+
+<!-- Toasts -->
+<div id="toast-container"></div>
+
+<script>
+/* ============================================================
+   CONSTANTS
+============================================================ */
+const STORAGE_KEY = 'studyforge_data';
+
+const MODULE_COLORS = ['#FF6B6B','#4ECDC4','#FFE66D','#A8E6CF','#FF8B94','#B5EAD7','#E2B0FF','#FFDAC1','#F0A500','#00D4AA','#FF4757','#3498DB'];
+
+const STUDENT_TYPES = [
+  {id:'gamer',name:'Gamer',icon:'fa-gamepad',desc:'Turn study into quests. Earn XP, level up, unlock achievements.',sessionLen:25,breakLen:5,prefStart:16,prefEnd:23,color:'#A855F7',terms:{session:'Quest',timetable:'Quest Log',log:'Battle Record'}},
+  {id:'night-owl',name:'Night Owl',icon:'fa-moon',desc:'Peak performance after dark. Deep late-night focus sessions.',sessionLen:60,breakLen:15,prefStart:20,prefEnd:2,color:'#3B82F6',terms:{session:'Night Session',timetable:'Night Schedule',log:'Night Log'}},
+  {id:'early-bird',name:'Early Bird',icon:'fa-sun',desc:'Rise and shine. Best focus in the morning hours.',sessionLen:45,breakLen:10,prefStart:6,prefEnd:12,color:'#F0A500',terms:{session:'Morning Session',timetable:'Morning Schedule',log:'Morning Log'}},
+  {id:'crammer',name:'Crammer',icon:'fa-bolt',desc:'Intense burst sessions. Go hard or go home.',sessionLen:90,breakLen:20,prefStart:10,prefEnd:22,color:'#FF4757',terms:{session:'Power Sprint',timetable:'Sprint Plan',log:'Sprint Log'}},
+  {id:'steady',name:'Steady Learner',icon:'fa-scale-balanced',desc:'Consistent daily progress. Slow and steady wins the race.',sessionLen:45,breakLen:15,prefStart:9,prefEnd:18,color:'#2ED573',terms:{session:'Study Block',timetable:'Weekly Plan',log:'Study Log'}}
+];
+
+const STUDY_METHODS = [
+  {id:'active-recall',name:'Active Recall',icon:'fa-brain',tip:'Close your notes and write down everything you remember. Then check what you missed. This strengthens neural pathways more than re-reading.',effectiveness:'Highest — proven by cognitive science research'},
+  {id:'practice-questions',name:'Practice Questions',icon:'fa-pen-to-square',tip:'Work through past papers and problem sets under timed conditions. Simulate the exam environment for best results.',effectiveness:'Very High — reveals knowledge gaps under pressure'},
+  {id:'revision',name:'Revision',icon:'fa-book-open',tip:'Summarize key concepts in your own words. Avoid passive re-reading — instead, reconstruct notes from memory.',effectiveness:'Moderate — only effective when done actively'},
+  {id:'flash-cards',name:'Flash Cards',icon:'fa-layer-group',tip:'Create question-answer cards. Review difficult cards more frequently. Best combined with spaced repetition scheduling.',effectiveness:'High — especially with spaced repetition'},
+  {id:'mind-mapping',name:'Mind Mapping',icon:'fa-diagram-project',tip:'Start from a central concept and branch out with related ideas. Use colors and images to strengthen memory associations.',effectiveness:'Good for visual learners and connecting concepts'},
+  {id:'teaching',name:'Teach Others',icon:'fa-chalkboard-user',tip:'Explain the concept as if teaching a beginner. Use simple language and analogies. The Feynman Technique reveals understanding gaps.',effectiveness:'Very High — teaching deepens understanding'},
+  {id:'spaced-repetition',name:'Spaced Repetition',icon:'fa-clock-rotate-left',tip:'Review material at increasing intervals: after 1 day, 3 days, 7 days, 14 days. This fights the forgetting curve.',effectiveness:'Highest — optimizes long-term memory retention'}
+];
+
+const DIFFICULTY_LABELS = ['','Easy','Moderate','Challenging','Hard','Extreme'];
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+const ACHIEVEMENTS = [
+  {id:'first-session',name:'First Steps',desc:'Complete your first study session',icon:'fa-shoe-prints',check:s=>s.sessions.length>=1},
+  {id:'five-sessions',name:'Getting Serious',desc:'Complete 5 study sessions',icon:'fa-fire',check:s=>s.sessions.length>=5},
+  {id:'streak-3',name:'On Fire',desc:'Maintain a 3-day streak',icon:'fa-fire-flame-curved',check:s=>s.streak>=3},
+  {id:'streak-7',name:'Week Warrior',desc:'Maintain a 7-day streak',icon:'fa-calendar-check',check:s=>s.streak>=7},
+  {id:'all-methods',name:'Method Master',desc:'Use all 7 study methods at least once',icon:'fa-hat-wizard',check:s=>{const m=new Set(s.sessions.map(x=>x.method));return m.size>=7}},
+  {id:'hard-module',name:'Hard Nut Cracked',desc:'Study a module with Extreme difficulty',icon:'fa-nut',check:s=>s.sessions.some(x=>{const mod=s.modules.find(m=>m.id===x.moduleId);return mod&&mod.difficulty>=5})},
+  {id:'level-5',name:'Leveled Up',desc:'Reach level 5',icon:'fa-arrow-up',check:s=>s.level>=5},
+  {id:'ten-hours',name:'Dedicated Scholar',desc:'Study for 10+ hours total',icon:'fa-clock',check:s=>s.sessions.reduce((a,b)=>a+b.duration,0)>=600},
+  {id:'all-modules',name:'Well Rounded',desc:'Study all registered modules',icon:'fa-globe',check:s=>{if(s.modules.length===0)return false;const studied=new Set(s.sessions.map(x=>x.moduleId));return s.modules.every(m=>studied.has(m.id))}},
+  {id:'level-10',name:'Study Legend',desc:'Reach level 10',icon:'fa-crown',check:s=>s.level>=10}
+];
+
+const NAV_ITEMS = [
+  {id:'dashboard',icon:'fa-th-large',label:'Dashboard'},
+  {id:'modules',icon:'fa-cubes',label:'Modules'},
+  {id:'timetable',icon:'fa-calendar-alt',label:'Timetable'},
+  {id:'study-log',icon:'fa-pen-nib',label:'Study Log'},
+  {id:'achievements',icon:'fa-trophy',label:'Achievements'},
+  {id:'settings',icon:'fa-cog',label:'Settings'}
+];
+
+/* ============================================================
+   STATE MANAGEMENT
+============================================================ */
+let state = {
+  profile:{name:'',studentType:'',weeklyStudyHours:20,onboardingComplete:false,notificationsEnabled:false},
+  modules:[],
+  timetable:[],
+  sessions:[],
+  xp:0,
+  level:1,
+  streak:0,
+  lastStudyDate:null,
+  unlockedAchievements:[],
+  currentView:'dashboard',
+  colorIndex:0
+};
+
+function saveState(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){console.warn('Save failed',e)}
+}
+
+function loadState(){
+  try{
+    const d=localStorage.getItem(STORAGE_KEY);
+    if(d){state={...state,...JSON.parse(d)};state.currentView='dashboard'}
+  }catch(e){console.warn('Load failed',e)}
+}
+
+function genId(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)}
+function getNextColor(){const c=MODULE_COLORS[state.colorIndex%MODULE_COLORS.length];state.colorIndex++;return c}
+function getStype(){return STUDENT_TYPES.find(t=>t.id===state.profile.studentType)||STUDENT_TYPES[4]}
+function today(){return new Date().toISOString().split('T')[0]}
+
+/* ============================================================
+   XP & LEVEL SYSTEM
+============================================================ */
+function xpForLevel(lvl){return lvl*100}
+function addXP(amount){
+  state.xp+=amount;
+  while(state.xp>=xpForLevel(state.level)){state.xp-=xpForLevel(state.level);state.level++;toast(`Level Up! You are now Level ${state.level}`,'success')}
+  checkAchievements();saveState();
+}
+
+/* ============================================================
+   STREAK
+============================================================ */
+function updateStreak(){
+  const t=today(),y=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  if(state.lastStudyDate===t)return;
+  if(state.lastStudyDate===y){state.streak++}
+  else if(state.lastStudyDate!==t){state.streak=1}
+  state.lastStudyDate=t;saveState();
+}
+
+/* ============================================================
+   ACHIEVEMENTS
+============================================================ */
+function checkAchievements(){
+  ACHIEVEMENTS.forEach(a=>{
+    if(!state.unlockedAchievements.includes(a.id)&&a.check(state)){
+      state.unlockedAchievements.push(a.id);
+      toast(`Achievement Unlocked: ${a.name}`,'success');
+      if(getStype().id==='gamer')addXP(50);
+    }
+  });saveState();
+}
+
+/* ============================================================
+   TOAST NOTIFICATIONS
+============================================================ */
+function toast(msg,type='info'){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  const icons={success:'fa-check-circle',error:'fa-exclamation-circle',info:'fa-info-circle'};
+  t.className=`toast toast-${type}`;
+  t.innerHTML=`<i class="fas ${icons[type]||icons.info}"></i><span>${msg}</span>`;
+  c.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+
+/* ============================================================
+   MODAL
+============================================================ */
+function openModal(html){
+  const o=document.getElementById('modal-overlay'),c=document.getElementById('modal-content');
+  c.innerHTML=html;o.classList.add('active');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('active')}
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target.id==='modal-overlay')closeModal()});
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+function renderNav(){
+  const nav=document.getElementById('sidebar-nav');
+  nav.innerHTML=NAV_ITEMS.map(n=>`<button data-view="${n.id}" class="${state.currentView===n.id?'active':''}"><i class="fas ${n.icon}"></i>${n.label}</button>`).join('');
+  nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    state.currentView=b.dataset.view;renderNav();renderView();
+    document.getElementById('sidebar').classList.remove('open');
+  }));
+  // Sidebar footer — XP for gamer
+  const ft=document.getElementById('sidebar-footer');
+  if(state.profile.studentType==='gamer'){
+    const pct=Math.min(100,Math.round(state.xp/xpForLevel(state.level)*100));
+    ft.innerHTML=`<div style="font-size:.75rem;color:var(--muted)">Level ${state.level}</div><div class="xp-bar-container"><div class="xp-bar-fill" style="width:${pct}%"></div></div><div style="font-size:.7rem;color:var(--muted);margin-top:2px">${state.xp}/${xpForLevel(state.level)} XP</div>`;
+  }else{ft.innerHTML=''}
+}
+
+function renderView(){
+  const main=document.getElementById('main-content');
+  const views={dashboard:renderDashboard,modules:renderModules,timetable:renderTimetable,'study-log':renderStudyLog,achievements:renderAchievements,settings:renderSettings};
+  main.innerHTML=`<div class="page-enter">${(views[state.currentView]||renderDashboard)()}</div>`;
+  afterRender();
+}
+
+function afterRender(){
+  // Init charts if dashboard
+  if(state.currentView==='dashboard')initDashboardCharts();
+}
+
+/* ============================================================
+   ONBOARDING
+============================================================ */
+function showOnboarding(){
+  const main=document.getElementById('main-content');
+  main.innerHTML=`
+  <div class="page-enter" style="max-width:600px;margin:40px auto;text-align:center">
+    <h1 style="font-size:2.5rem;font-weight:900;margin-bottom:8px">Welcome to Study<span style="color:var(--accent)">Forge</span></h1>
+    <p style="color:var(--muted);margin-bottom:32px">Your intelligent study companion. Let's set up your profile.</p>
+    <div class="card" style="text-align:left">
+      <div class="form-group"><label>Your Name</label><input type="text" id="ob-name" class="form-input" placeholder="Enter your name"></div>
+      <div class="form-group"><label>Student Type</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px" id="ob-types">
+          ${STUDENT_TYPES.map(t=>`<button class="btn btn-secondary ob-type-btn" data-type="${t.id}" style="flex-direction:column;padding:14px;gap:6px;font-size:.8rem"><i class="fas ${t.icon}" style="font-size:1.3rem;color:${t.color}"></i>${t.name}<span style="font-size:.65rem;color:var(--muted);font-weight:400">${t.desc.split('.')[0]}</span></button>`).join('')}
+        </div>
+      </div>
+      <div class="form-group"><label>Weekly Study Hours</label><input type="number" id="ob-hours" class="form-input" value="20" min="1" max="80"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" id="ob-start"><i class="fas fa-rocket"></i>Start Learning</button>
+    </div>
+  </div>`;
+  let selectedType='';
+  document.querySelectorAll('.ob-type-btn').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.ob-type-btn').forEach(x=>x.style.borderColor='var(--border)');
+    b.style.borderColor='var(--accent)';selectedType=b.dataset.type;
+  }));
+  document.getElementById('ob-start').addEventListener('click',()=>{
+    const name=document.getElementById('ob-name').value.trim();
+    const hours=parseInt(document.getElementById('ob-hours').value)||20;
+    if(!name){toast('Please enter your name','error');return}
+    if(!selectedType){toast('Please select a student type','error');return}
+    state.profile={name,studentType:selectedType,weeklyStudyHours:Math.max(1,Math.min(80,hours)),onboardingComplete:true,notificationsEnabled:false};
+    saveState();renderNav();renderView();toast(`Welcome, ${name}! Let's forge your study path.`,'success');
+    // Request notification permission
+    if('Notification' in window)Notification.requestPermission().then(p=>{state.profile.notificationsEnabled=p==='granted';saveState()});
+  });
+}
+
+/* ============================================================
+   DASHBOARD
+============================================================ */
+function renderDashboard(){
+  const st=getStype(),todaySessions=state.timetable.filter(t=>t.day===DAYS[new Date().getDay()-1]||((new Date().getDay()===0)&&t.day==='Sunday'));
+  const weekSessions=state.sessions.filter(s=>{const d=new Date(s.date);const now=new Date();const weekAgo=new Date(now-7*86400000);return d>=weekAgo&&d<=now});
+  const totalMinWeek=weekSessions.reduce((a,b)=>a+b.duration,0);
+  const todayStr=today();
+  const todayLogged=state.sessions.filter(s=>s.date===todayStr);
+  const todayMin=todayLogged.reduce((a,b)=>a+b.duration,0);
+  const goalMin=Math.round(state.profile.weeklyStudyHours*60/7);
+  const goalPct=Math.min(100,Math.round(todayMin/goalMin*100));
+  const nextSession=getNextSession();
+
+  return `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div><h1 style="font-size:1.8rem;font-weight:800">Good ${getGreeting()}, ${state.profile.name}</h1><p style="color:var(--muted);font-size:.9rem">${getDashboardSubtitle()}</p></div>
+    <button class="btn btn-primary pulse-ring" onclick="showQuickSession()"><i class="fas fa-play"></i>Quick Study Session</button>
+  </div>
+
+  <!-- Stats row -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
+    <div class="card stat-card"><div class="stat-value" style="color:var(--accent)">${state.streak>0?`<span class="streak-flame">&#128293;</span> ${state.streak}`:'0'}</div><div class="stat-label">Day Streak</div></div>
+    <div class="card stat-card"><div class="stat-value" style="color:var(--accent2)">${Math.round(totalMinWeek/60*10)/10}h</div><div class="stat-label">This Week</div></div>
+    <div class="card stat-card"><div class="stat-value" style="color:var(--success)">${state.sessions.length}</div><div class="stat-label">Total Sessions</div></div>
+    <div class="card stat-card"><div class="stat-value" style="color:var(--purple)">${state.level}</div><div class="stat-label">Level</div></div>
+  </div>
+
+  <!-- Today's goal -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-weight:600;font-size:.9rem">Today's Goal</span>
+      <span style="font-size:.8rem;color:var(--muted)">${Math.round(todayMin/60*10)/10}h / ${Math.round(goalMin/60*10)/10}h</span>
+    </div>
+    <div class="xp-bar-container" style="height:10px;border-radius:5px"><div class="xp-bar-fill" style="width:${goalPct}%;border-radius:5px"></div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" class="dash-grid">
+    <!-- Next session -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px"><i class="fas fa-clock" style="color:var(--accent);margin-right:6px"></i>Up Next</h3>
+      ${nextSession?renderNextSession(nextSession):`<p style="color:var(--muted);font-size:.85rem">No sessions scheduled for today. <a href="#" onclick="state.currentView='timetable';renderNav();renderView();return false" style="color:var(--accent)">Create a timetable</a></p>`}
+    </div>
+    <!-- Today's sessions -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px"><i class="fas fa-list-check" style="color:var(--accent2);margin-right:6px"></i>Today's ${st.terms.session}s</h3>
+      ${todayLogged.length?todayLogged.map(s=>{const mod=state.modules.find(m=>m.id===s.moduleId);const meth=STUDY_METHODS.find(m=>m.id===s.method);return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="width:8px;height:8px;border-radius:50%;background:${mod?mod.color:'#666'}"></span><span style="font-size:.85rem">${mod?mod.name:'Unknown'}</span><span class="method-tag"><i class="fas ${meth.icon}"></i>${meth.name}</span><span style="font-size:.75rem;color:var(--muted)">${s.duration}min</span></div>`}).join(''):`<p style="color:var(--muted);font-size:.85rem">No sessions logged today. Start studying!</p>`}
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px"><i class="fas fa-chart-bar" style="color:var(--accent);margin-right:6px"></i>Weekly Study Progress</h3>
+    <canvas id="weeklyChart" height="200"></canvas>
+  </div>
+
+  <!-- Module progress -->
+  ${state.modules.length?`<div class="card"><h3 style="font-size:1rem;font-weight:700;margin-bottom:12px"><i class="fas fa-chart-pie" style="color:var(--accent2);margin-right:6px"></i>Module Progress</h3><canvas id="moduleChart" height="180"></canvas></div>`:''}
+
+  <style>.dash-grid{grid-template-columns:1fr 1fr}@media(max-width:640px){.dash-grid{grid-template-columns:1fr}}</style>
+  `;
+}
+
+function getGreeting(){const h=new Date().getHours();return h<12?'Morning':h<17?'Afternoon':'Evening'}
+function getDashboardSubtitle(){const d=new Date();return`${DAYS[(d.getDay()+6)%7]}, ${d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}`}
+
+function getNextSession(){
+  const day=DAYS[(new Date().getDay()+6)%7];
+  const now=new Date();const nowMin=now.getHours()*60+now.getMinutes();
+  const today=state.timetable.filter(t=>t.day===day);
+  today.sort((a,b)=>a.startMinute-b.startMinute);
+  return today.find(t=>t.startMinute>nowMin)||null;
+}
+
+function renderNextSession(s){
+  const mod=state.modules.find(m=>m.id===s.moduleId);
+  const meth=STUDY_METHODS.find(m=>m.id===s.method);
+  const hr=Math.floor(s.startMinute/60),mn=s.startMinute%60;
+  return`<div style="display:flex;align-items:center;gap:12px"><div style="width:40px;height:40px;border-radius:10px;background:${mod?mod.color+'22':'#333'};display:flex;align-items:center;justify-content:center"><i class="fas ${meth?meth.icon:'fa-book'}" style="color:${mod?mod.color:'#999'}"></i></div><div><div style="font-weight:600;font-size:.9rem">${mod?mod.name:'Unknown'}</div><div style="font-size:.8rem;color:var(--muted)">${meth?meth.name:'Study'} at ${String(hr).padStart(2,'0')}:${String(mn).padStart(2,'0')} (${s.duration}min)</div></div></div>`;
+}
+
+function initDashboardCharts(){
+  // Weekly chart
+  const wCtx=document.getElementById('weeklyChart');
+  if(!wCtx)return;
+  const last7=[];const labels=[];
+  for(let i=6;i>=0;i--){const d=new Date(Date.now()-i*86400000);const ds=d.toISOString().split('T')[0];labels.push(DAY_SHORT[(d.getDay()+6)%7]);last7.push(Math.round(state.sessions.filter(s=>s.date===ds).reduce((a,b)=>a+b.duration,0)/60*10)/10)}
+  new Chart(wCtx,{type:'bar',data:{labels,datasets:[{label:'Hours',data:last7,backgroundColor:'rgba(240,165,0,0.3)',borderColor:'#F0A500',borderWidth:2,borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{color:'#747D8C'},grid:{color:'#2F354222'}},x:{ticks:{color:'#747D8C'},grid:{display:false}}}}});
+
+  // Module chart
+  const mCtx=document.getElementById('moduleChart');
+  if(!mCtx||!state.modules.length)return;
+  const modData=state.modules.map(m=>Math.round(state.sessions.filter(s=>s.moduleId===m.id).reduce((a,b)=>a+b.duration,0)/60*10)/10);
+  new Chart(mCtx,{type:'doughnut',data:{labels:state.modules.map(m=>m.name),datasets:[{data:modData,backgroundColor:state.modules.map(m=>m.color+'CC'),borderColor:state.modules.map(m=>m.color),borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#F1F2F6',font:{size:11}}}}}});
+}
+
+/* ============================================================
+   MODULES
+============================================================ */
+function renderModules(){
+  return `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div><h1 style="font-size:1.8rem;font-weight:800">Modules</h1><p style="color:var(--muted);font-size:.9rem">Manage your subjects and their difficulty weights</p></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" onclick="showUploadModal()"><i class="fas fa-upload"></i>Upload</button>
+      <button class="btn btn-primary" onclick="showAddModuleModal()"><i class="fas fa-plus"></i>Add Module</button>
+    </div>
+  </div>
+
+  ${state.modules.length===0?`<div class="card" style="text-align:center;padding:48px"><i class="fas fa-cubes" style="font-size:3rem;color:var(--muted);margin-bottom:12px"></i><p style="color:var(--muted);font-size:1rem;margin-bottom:16px">No modules yet. Add your first module or upload a list.</p><button class="btn btn-primary" onclick="showAddModuleModal()"><i class="fas fa-plus"></i>Add Module</button></div>`
+  :`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">${state.modules.map(m=>renderModuleCard(m)).join('')}</div>`}
+
+  <div class="card" style="margin-top:24px">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:8px"><i class="fas fa-info-circle" style="color:var(--accent);margin-right:6px"></i>How Weighting Works</h3>
+    <p style="font-size:.85rem;color:var(--muted);line-height:1.6">Each module's difficulty (1-5) determines its <strong style="color:var(--text)">study weight</strong>. Higher difficulty = more study time allocated. A module rated "Extreme" (5) gets 5x the time of an "Easy" (1) module. The timetable generator uses these weights to distribute your weekly hours proportionally.</p>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      ${[1,2,3,4,5].map(d=>`<span class="diff-badge diff-${d}">${DIFFICULTY_LABELS[d]} (${d}x)</span>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderModuleCard(m){
+  const totalMin=state.sessions.filter(s=>s.moduleId===m.id).reduce((a,b)=>a+b.duration,0);
+  const schedMin=state.timetable.filter(t=>t.moduleId===m.id).reduce((a,b)=>a+b.duration,0);
+  return`<div class="card" style="border-left:3px solid ${m.color}">
+    <div style="display:flex;justify-content:space-between;align-items:start">
+      <div><h3 style="font-weight:700;font-size:1.05rem">${m.name}</h3><p style="font-size:.8rem;color:var(--muted)">${m.code}</p></div>
+      <span class="diff-badge diff-${m.difficulty}">${DIFFICULTY_LABELS[m.difficulty]}</span>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:12px;font-size:.8rem;color:var(--muted)">
+      <span><i class="fas fa-weight-hanging" style="color:${m.color}"></i> ${m.difficulty}x weight</span>
+      <span><i class="fas fa-clock" style="color:var(--accent2)"></i> ${Math.round(totalMin/60*10)/10}h studied</span>
+      <span><i class="fas fa-calendar" style="color:var(--accent)"></i> ${Math.round(schedMin/60*10)/10}h/week</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:12px">
+      <button class="btn btn-secondary btn-sm" onclick="showEditModuleModal('${m.id}')"><i class="fas fa-pen"></i>Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteModule('${m.id}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>`;
+}
+
+function showAddModuleModal(edit=null){
+  const m=edit?state.modules.find(x=>x.id===edit):null;
+  openModal(`
+  <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:20px">${m?'Edit':'Add'} Module</h2>
+  <div class="form-group"><label>Module Name</label><input type="text" id="mod-name" class="form-input" value="${m?m.name:''}" placeholder="e.g. Mathematics"></div>
+  <div class="form-group"><label>Module Code</label><input type="text" id="mod-code" class="form-input" value="${m?m.code:''}" placeholder="e.g. MATH101"></div>
+  <div class="form-group"><label>Difficulty Level</label>
+    <select id="mod-diff" class="form-input">
+      ${[1,2,3,4,5].map(d=>`<option value="${d}" ${m&&m.difficulty===d?'selected':''}>${DIFFICULTY_LABELS[d]} (${d}x weight)</option>`).join('')}
+    </select>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveModule('${edit||''}')"><i class="fas fa-save"></i>${m?'Update':'Add Module'}</button>
+  </div>`);
+}
+
+function saveModule(editId){
+  const name=document.getElementById('mod-name').value.trim();
+  const code=document.getElementById('mod-code').value.trim();
+  const diff=parseInt(document.getElementById('mod-diff').value);
+  if(!name){toast('Module name is required','error');return}
+  if(editId){
+    const m=state.modules.find(x=>x.id===editId);
+    if(m){m.name=name;m.code=code;m.difficulty=diff}
+    toast('Module updated','success');
+  }else{
+    state.modules.push({id:genId(),name,code,difficulty:diff,color:getNextColor()});
+    toast('Module added','success');
+  }
+  saveState();closeModal();renderView();
+}
+
+function showEditModuleModal(id){showAddModuleModal(id)}
+
+function deleteModule(id){
+  openModal(`<h2 style="font-size:1.2rem;font-weight:700;margin-bottom:12px">Delete Module?</h2><p style="color:var(--muted);margin-bottom:20px">This will also remove its timetable sessions.</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="confirmDeleteModule('${id}')">Delete</button></div>`);
+}
+
+function confirmDeleteModule(id){
+  state.modules=state.modules.filter(m=>m.id!==id);
+  state.timetable=state.timetable.filter(t=>t.moduleId!==id);
+  saveState();closeModal();renderView();toast('Module deleted','info');
+}
+
+function showUploadModal(){
+  openModal(`
+  <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:20px">Upload Modules</h2>
+  <div class="file-upload" onclick="document.getElementById('file-input').click()">
+    <i class="fas fa-cloud-upload-alt" style="display:block"></i>
+    <p style="color:var(--muted);font-size:.85rem">Click to upload CSV or JSON file</p>
+    <p style="color:var(--border);font-size:.7rem;margin-top:4px">CSV format: name, code, difficulty (1-5)</p>
+    <input type="file" id="file-input" accept=".csv,.json" style="display:none" onchange="handleFileUpload(this)">
+  </div>
+  <div style="margin-top:16px">
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Or paste CSV data:</p>
+    <textarea id="paste-data" class="form-input" rows="4" placeholder="Mathematics, MATH101, 4&#10;Physics, PHYS201, 5"></textarea>
+    <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="parsePastedData()"><i class="fas fa-check"></i>Import</button>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn btn-secondary" onclick="closeModal()">Close</button></div>`);
+}
+
+function handleFileUpload(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=e.target.result;
+    if(file.name.endsWith('.json')){try{parseModuleJSON(text)}catch(er){toast('Invalid JSON file','error')}}
+    else{parseModuleCSV(text)}
+  };reader.readAsText(file);
+}
+
+function parseModuleCSV(text){
+  const lines=text.trim().split('\n');let count=0;
+  lines.forEach((line,i)=>{
+    const parts=line.split(',').map(s=>s.trim());
+    if(parts.length>=3&&i===0&&parts[0].toLowerCase().includes('name'))return;// skip header
+    const name=parts[0],code=parts[1]||'',diff=parseInt(parts[2])||3;
+    if(name&&!state.modules.find(m=>m.code===code&&code)){
+      state.modules.push({id:genId(),name,code,difficulty:Math.max(1,Math.min(5,diff)),color:getNextColor()});count++;
+    }
+  });
+  saveState();closeModal();renderView();toast(`Imported ${count} modules`,'success');
+}
+
+function parseModuleJSON(text){
+  const arr=JSON.parse(text);let count=0;
+  arr.forEach(item=>{
+    if(item.name){
+      state.modules.push({id:genId(),name:item.name,code:item.code||'',difficulty:Math.max(1,Math.min(5,item.difficulty||3)),color:getNextColor()});count++;
+    }
+  });
+  saveState();closeModal();renderView();toast(`Imported ${count} modules`,'success');
+}
+
+function parsePastedData(){const text=document.getElementById('paste-data').value;parseModuleCSV(text)}
+
+/* ============================================================
+   TIMETABLE
+============================================================ */
+function renderTimetable(){
+  const st=getStype();
+  return `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div><h1 style="font-size:1.8rem;font-weight:800">${st.terms.timetable}</h1><p style="color:var(--muted);font-size:.9rem">Your personalized weekly study schedule</p></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" onclick="showAddTimetableModal()"><i class="fas fa-plus"></i>Add Session</button>
+      <button class="btn btn-primary" onclick="generateTimetable()"><i class="fas fa-magic"></i>Auto-Generate</button>
+    </div>
+  </div>
+
+  ${state.modules.length===0?`<div class="card" style="text-align:center;padding:48px"><i class="fas fa-calendar-xmark" style="font-size:3rem;color:var(--muted);margin-bottom:12px"></i><p style="color:var(--muted);margin-bottom:16px">Add modules first to generate a timetable.</p><button class="btn btn-primary" onclick="state.currentView='modules';renderNav();renderView()"><i class="fas fa-cubes"></i>Go to Modules</button></div>`
+  :state.timetable.length===0?`<div class="card" style="text-align:center;padding:48px"><i class="fas fa-wand-magic-sparkles" style="font-size:3rem;color:var(--accent);margin-bottom:12px"></i><p style="color:var(--muted);margin-bottom:16px">No sessions scheduled yet. Auto-generate based on your student type or add manually.</p><button class="btn btn-primary" onclick="generateTimetable()"><i class="fas fa-magic"></i>Generate ${st.terms.timetable}</button></div>`
+  :renderTimetableGrid()}
+
+  ${state.timetable.length?`<div class="card" style="margin-top:16px"><h3 style="font-size:1rem;font-weight:700;margin-bottom:8px"><i class="fas fa-lightbulb" style="color:var(--accent);margin-right:6px"></i>Your ${st.name} Strategy</h3><p style="font-size:.85rem;color:var(--muted);line-height:1.6">${getStudentTypeStrategy()}</p></div>`:''}`;
+}
+
+function getStudentTypeStrategy(){
+  const t=getStype();
+  const strategies={
+    gamer:'Your sessions are structured as 25-minute "quests" with short 5-minute "respawn" breaks. Complete quests to earn XP and level up. Chain sessions for combo bonuses. Each method rotation keeps gameplay fresh. Boss fights = major revision sessions before exams!',
+    'night-owl':'Your schedule places the heaviest sessions between 8PM-2AM when your focus peaks. Use the quiet nighttime hours for deep work. The 60-minute blocks let you reach flow state. Guard your sleep — if a session runs past 2AM, wrap it up.',
+    'early-bird':'Your schedule front-loads study into the morning when your mind is freshest. 45-minute blocks with 10-minute breaks maintain quality. Tackle your hardest modules first thing when willpower is highest. Afternoons are free for lighter review.',
+    crammer:'Your 90-minute power sprints match your high-intensity style. Go all-in during each block, then take a real 20-minute break — walk around, hydrate, reset. This is NOT the night-before-exam cram — it\'s structured intensity. Space sprints across the week.',
+    steady:'Your balanced 45-minute blocks are spread evenly across the week. Consistency beats intensity. Show up every day, even if some days are lighter. This schedule builds sustainable habits that don\'t burn you out.'
+  };
+  return strategies[t.id]||strategies.steady;
+}
+
+function renderTimetableGrid(){
+  const hours=[];const st=getStype();
+  const startH=Math.max(6,st.prefStart);const endH=Math.min(24,st.prefEnd<st.prefStart?st.prefEnd+24:st.prefEnd);
+  for(let h=startH;h<endH;h++){hours.push(h%24)}
+
+  let html=`<div style="overflow-x:auto"><div class="tt-grid">`;
+  // Header
+  html+=`<div class="tt-header"></div>`;
+  DAY_SHORT.forEach(d=>html+=`<div class="tt-header">${d}</div>`);
+
+  // Rows
+  hours.forEach(h=>{
+    html+=`<div class="tt-time">${String(h).padStart(2,'0')}:00</div>`;
+    DAYS.forEach((day,di)=>{
+      const min=h*60;
+      const sessions=state.timetable.filter(t=>t.day===day&&t.startMinute===min);
+      html+=`<div class="tt-cell" data-day="${day}" data-hour="${h}">`;
+      sessions.forEach(s=>{
+        const mod=state.modules.find(m=>m.id===s.moduleId);
+        const meth=STUDY_METHODS.find(m=>m.id===s.method);
+        html+=`<div class="tt-session" style="background:${mod?mod.color+'22':'#333222'};color:${mod?mod.color:'#ccc'};border-left:2px solid ${mod?mod.color:'#666'}" onclick="showSessionDetail('${s.id}')" title="${meth?meth.name:''}">${mod?mod.code:'?'} <span style="font-weight:400;font-size:.6rem">${s.duration}m</span></div>`;
+      });
+      html+=`</div>`;
+    });
+  });
+  html+=`</div></div>`;
+  return html;
+}
+
+function generateTimetable(){
+  if(state.modules.length===0){toast('Add modules first','error');return}
+  const st=getStype();
+  const weeklyMin=state.profile.weeklyStudyHours*60;
+  const totalWeight=state.modules.reduce((a,m)=>a+m.difficulty,0);
+  if(totalWeight===0)return;
+
+  // Calculate minutes per module
+  const alloc={};
+  state.modules.forEach(m=>alloc[m.id]=Math.round((m.difficulty/totalWeight)*weeklyMin));
+
+  // Determine preferred days
+  const prefDays=getPreferredDays(st.id);
+
+  const newTT=[];let methodIdx=0;
+  const methods=STUDY_METHODS.map(m=>m.id);
+  const usedSlots={};DAYS.forEach(d=>usedSlots[d]=new Set());
+
+  state.modules.forEach(mod=>{
+    let remaining=alloc[mod.id];let dayIdx=0;let sessionCount=0;
+    while(remaining>0){
+      const day=prefDays[dayIdx%prefDays.length];
+      const dur=Math.min(st.sessionLen,remaining);
+      // Find available slot
+      const startMin=findSlot(day,dur,usedSlots,st);
+      if(startMin===-1){dayIdx++;if(dayIdx>50)break;continue}
+
+      usedSlots[day].add(startMin);
+      newTT.push({id:genId(),moduleId:mod.id,day,startMinute:startMin,duration:dur,method:methods[methodIdx%methods.length]});
+      remaining-=dur;dayIdx++;methodIdx++;sessionCount++;
+      if(sessionCount>20)break;// safety
+    }
+  });
+
+  state.timetable=newTT;saveState();renderView();
+  toast(`${st.terms.timetable} generated with ${newTT.length} sessions!`,'success');
+}
+
+function getPreferredDays(typeId){
+  switch(typeId){
+    case'gamer':return['Monday','Wednesday','Friday','Saturday','Tuesday','Thursday','Sunday'];
+    case'night-owl':return['Monday','Wednesday','Friday','Sunday','Tuesday','Thursday','Saturday'];
+    case'early-bird':return['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    case'crammer':return['Saturday','Sunday','Wednesday','Monday','Friday','Tuesday','Thursday'];
+    case'steady':return['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    default:return DAYS;
+  }
+}
+
+function findSlot(day,dur,usedSlots,st){
+  const startH=st.prefStart;const endH=st.prefEnd<st.prefStart?st.prefEnd+24:st.prefEnd;
+  for(let h=startH;h<endH;h++){
+    const min=(h%24)*60;
+    if(!usedSlots[day].has(min))return min;
+  }
+  // Fallback
+  for(let h=8;h<22;h++){const min=h*60;if(!usedSlots[day].has(min))return min}
+  return -1;
+}
+
+function showAddTimetableModal(editId=null){
+  const s=editId?state.timetable.find(t=>t.id===editId):null;
+  openModal(`
+  <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:20px">${s?'Edit':'Add'} ${getStype().terms.session}</h2>
+  <div class="form-group"><label>Module</label><select id="tt-module" class="form-input">${state.modules.map(m=>`<option value="${m.id}" ${s&&s.moduleId===m.id?'selected':''}>${m.name} (${DIFFICULTY_LABELS[m.difficulty]})</option>`).join('')}</select></div>
+  <div class="form-group"><label>Day</label><select id="tt-day" class="form-input">${DAYS.map(d=>`<option value="${d}" ${s&&s.day===d?'selected':''}>${d}</option>`).join('')}</select></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="form-group"><label>Start Time</label><input type="time" id="tt-start" class="form-input" value="${s?String(Math.floor(s.startMinute/60)).padStart(2,'0')+':'+String(s.startMinute%60).padStart(2,'0'):'09:00'}"></div>
+    <div class="form-group"><label>Duration (min)</label><input type="number" id="tt-dur" class="form-input" value="${s?s.duration:getStype().sessionLen}" min="10" max="180"></div>
+  </div>
+  <div class="form-group"><label>Study Method</label><select id="tt-method" class="form-input">${STUDY_METHODS.map(m=>`<option value="${m.id}" ${s&&s.method===m.id?'selected':''}>${m.name}</option>`).join('')}</select></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveTimetableEntry('${editId||''}')"><i class="fas fa-save"></i>Save</button>
+  </div>`);
+}
+
+function saveTimetableEntry(editId){
+  const moduleId=document.getElementById('tt-module').value;
+  const day=document.getElementById('tt-day').value;
+  const timeVal=document.getElementById('tt-start').value.split(':');
+  const startMinute=parseInt(timeVal[0])*60+parseInt(timeVal[1]);
+  const duration=Math.max(10,parseInt(document.getElementById('tt-dur').value)||45);
+  const method=document.getElementById('tt-method').value;
+
+  if(editId){
+    const s=state.timetable.find(t=>t.id===editId);
+    if(s){Object.assign(s,{moduleId,day,startMinute,duration,method})}
+    toast('Session updated','success');
+  }else{
+    state.timetable.push({id:genId(),moduleId,day,startMinute,duration,method});
+    toast('Session added','success');
+  }
+  saveState();closeModal();renderView();
+}
+
+function showSessionDetail(id){
+  const s=state.timetable.find(t=>t.id===id);if(!s)return;
+  const mod=state.modules.find(m=>m.id===s.moduleId);
+  const meth=STUDY_METHODS.find(m=>m.id===s.method);
+  const hr=Math.floor(s.startMinute/60),mn=s.startMinute%60;
+  openModal(`
+  <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:16px">${mod?mod.name:'Unknown'}</h2>
+  <div style="display:grid;gap:8px;margin-bottom:16px;font-size:.9rem">
+    <div><span style="color:var(--muted)">Day:</span> ${s.day}</div>
+    <div><span style="color:var(--muted)">Time:</span> ${String(hr).padStart(2,'0')}:${String(mn).padStart(2,'0')}</div>
+    <div><span style="color:var(--muted)">Duration:</span> ${s.duration} minutes</div>
+    <div><span style="color:var(--muted)">Method:</span> <span class="method-tag"><i class="fas ${meth.icon}"></i>${meth.name}</span></div>
+  </div>
+  <div class="tip-box" style="margin-bottom:16px"><i class="fas fa-lightbulb" style="margin-right:4px"></i> ${meth.tip}</div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn btn-secondary btn-sm" onclick="showAddTimetableModal('${id}')"><i class="fas fa-pen"></i>Edit</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteTimetableEntry('${id}')"><i class="fas fa-trash"></i>Delete</button>
+    <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+  </div>`);
+}
+
+function deleteTimetableEntry(id){
+  state.timetable=state.timetable.filter(t=>t.id!==id);
+  saveState();closeModal();renderView();toast('Session removed','info');
+}
+
+/* ============================================================
+   STUDY LOG
+============================================================ */
+function renderStudyLog(){
+  const st=getStype();
+  const sorted=[...state.sessions].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div><h1 style="font-size:1.8rem;font-weight:800">${st.terms.log}</h1><p style="color:var(--muted);font-size:.9rem">Track your study sessions and effectiveness</p></div>
+    <button class="btn btn-primary" onclick="showLogSessionModal()"><i class="fas fa-plus"></i>Log ${st.terms.session}</button>
+  </div>
+
+  ${sorted.length===0?`<div class="card" style="text-align:center;padding:48px"><i class="fas fa-pen-nib" style="font-size:3rem;color:var(--muted);margin-bottom:12px"></i><p style="color:var(--muted);margin-bottom:16px">No sessions logged yet. Start studying and log your progress!</p><button class="btn btn-primary" onclick="showLogSessionModal()"><i class="fas fa-plus"></i>Log First ${st.terms.session}</button></div>`
+  :`<div style="display:flex;flex-direction:column;gap:8px">${sorted.map(s=>renderSessionEntry(s)).join('')}</div>`}`;
+}
+
+function renderSessionEntry(s){
+  const mod=state.modules.find(m=>m.id===s.moduleId);
+  const meth=STUDY_METHODS.find(m=>m.id===s.method);
+  const stars=s.effectiveness?[1,2,3,4,5].map(i=>`<i class="fas fa-star ${i<=s.effectiveness?'active':''}" style="font-size:.75rem"></i>`).join(''):'';
+  return`<div class="card" style="display:flex;align-items:center;gap:16px;padding:16px;flex-wrap:wrap">
+    <div style="width:44px;height:44px;border-radius:10px;background:${mod?mod.color+'22':'#333222'};display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas ${meth?meth.icon:'fa-book'}" style="color:${mod?mod.color:'#999'}"></i></div>
+    <div style="flex:1;min-width:150px">
+      <div style="font-weight:600;font-size:.95rem">${mod?mod.name:'Unknown Module'}</div>
+      <div style="font-size:.8rem;color:var(--muted)">${s.date} &middot; ${s.duration}min &middot; <span class="method-tag" style="font-size:.65rem"><i class="fas ${meth?meth.icon:'fa-book'}"></i>${meth?meth.name:'Study'}</span></div>
+      ${s.notes?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px;font-style:italic">"${s.notes}"</div>`:''}
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div class="star-rating">${stars}</div>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-secondary btn-sm" style="padding:4px 8px" onclick="deleteSession('${s.id}')"><i class="fas fa-trash" style="font-size:.7rem"></i></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function showLogSessionModal(){
+  const st=getStype();
+  openModal(`
+  <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:20px">Log ${st.terms.session}</h2>
+  <div class="form-group"><label>Module</label><select id="log-module" class="form-input">${state.modules.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</select></div>
+  <div class="form-group"><label>Date</label><input type="date" id="log-date" class="form-input" value="${today()}"></div>
+  <div class="form-group"><label>Duration (minutes)</label><input type="number" id="log-dur" class="form-input" value="${st.sessionLen}" min="5" max="480"></div>
+  <div class="form-group"><label>Study Method</label><select id="log-method" class="form-input">${STUDY_METHODS.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</select></div>
+  <div class="form-group"><label>Effectiveness</label>
+    <div class="star-rating" id="log-stars">${[1,2,3,4,5].map(i=>`<i class="fas fa-star" data-val="${i}"></i>`).join('')}</div>
+  </div>
+  <div class="tip-box" id="log-tip" style="margin-bottom:12px">Select a study method to see effectiveness tips.</div>
+  <div class="form-group"><label>Notes (optional)</label><textarea id="log-notes" class="form-input" rows="2" placeholder="How did the session go?"></textarea></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveSession()"><i class="fas fa-save"></i>Log Session</button>
+  </div>`);
+
+  // Star rating interaction
+  let selectedStars=0;
+  document.querySelectorAll('#log-stars i').forEach(star=>{
+    star.addEventListener('click',()=>{
+      selectedStars=parseInt(star.dataset.val);
+      document.querySelectorAll('#log-stars i').forEach((s,i)=>s.classList.toggle('active',i<selectedStars));
+    });
+    star.addEventListener('mouseenter',()=>{
+      const v=parseInt(star.dataset.val);
+      document.querySelectorAll('#log-stars i').forEach((s,i)=>s.classList.toggle('active',i<v));
+    });
+  });
+  document.getElementById('log-stars').addEventListener('mouseleave',()=>{
+    document.querySelectorAll('#log-stars i').forEach((s,i)=>s.classList.toggle('active',i<selectedStars));
+  });
+
+  // Method tip update
+  document.getElementById('log-method').addEventListener('change',e=>{
+    const meth=STUDY_METHODS.find(m=>m.id===e.target.value);
+    if(meth)document.getElementById('log-tip').innerHTML=`<strong>${meth.name}:</strong> ${meth.tip}<br><small style="opacity:.7">${meth.effectiveness}</small>`;
+  });
+  // Trigger initial
+  const initMeth=STUDY_METHODS[0];
+  document.getElementById('log-tip').innerHTML=`<strong>${initMeth.name}:</strong> ${initMeth.tip}<br><small style="opacity:.7">${initMeth.effectiveness}</small>`;
+}
+
+function saveSession(){
+  const moduleId=document.getElementById('log-module').value;
+  const date=document.getElementById('log-date').value;
+  const duration=Math.max(5,parseInt(document.getElementById('log-dur').value)||45);
+  const method=document.getElementById('log-method').value;
+  const notes=document.getElementById('log-notes').value.trim();
+  const stars=document.querySelectorAll('#log-stars i.active').length;
+
+  if(!date){toast('Please select a date','error');return}
+
+  state.sessions.push({id:genId(),moduleId,date,duration,method,notes,effectiveness:stars});
+  updateStreak();
+
+  // XP based on duration and effectiveness
+  const baseXP=Math.round(duration/5);
+  const effBonus=stars>0?Math.round(baseXP*stars/5):0;
+  if(getStype().id==='gamer'){addXP(baseXP+effBonus);toast(`+${baseXP+effBonus} XP earned!`,'success')}
+  else{checkAchievements()}
+
+  saveState();closeModal();renderView();toast('Session logged! Keep it up!','success');
+}
+
+function showQuickSession(){
+  if(state.modules.length===0){toast('Add modules first','error');state.currentView='modules';renderNav();renderView();return}
+  showLogSessionModal();
+}
+
+function deleteSession(id){
+  state.sessions=state.sessions.filter(s=>s.id!==id);saveState();renderView();toast('Session removed','info');
+}
+
+/* ============================================================
+   ACHIEVEMENTS
+============================================================ */
+function renderAchievements(){
+  return `
+  <div style="margin-bottom:24px"><h1 style="font-size:1.8rem;font-weight:800">Achievements</h1><p style="color:var(--muted);font-size:.9rem">${state.unlockedAchievements.length}/${ACHIEVEMENTS.length} Unlocked</p></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+    ${ACHIEVEMENTS.map(a=>{
+      const unlocked=state.unlockedAchievements.includes(a.id);
+      return`<div class="achievement ${unlocked?'unlocked':'locked'}">
+        <div class="achievement-icon"><i class="fas ${a.icon}"></i></div>
+        <div><div style="font-weight:600;font-size:.9rem;color:${unlocked?'var(--text)':'var(--muted)'}">${a.name}</div><div style="font-size:.8rem;color:var(--muted)">${a.desc}</div></div>
+        ${unlocked?'<i class="fas fa-check-circle" style="margin-left:auto;color:var(--accent)"></i>':''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ============================================================
+   SETTINGS
+============================================================ */
+function renderSettings(){
+  const st=getStype();
+  return `
+  <div style="margin-bottom:24px"><h1 style="font-size:1.8rem;font-weight:800">Settings</h1><p style="color:var(--muted);font-size:.9rem">Customize your study experience</p></div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px"><i class="fas fa-user" style="color:var(--accent);margin-right:6px"></i>Profile</h3>
+    <div class="form-group"><label>Name</label><input type="text" id="set-name" class="form-input" value="${state.profile.name}"></div>
+    <div class="form-group"><label>Student Type</label>
+      <select id="set-type" class="form-input">${STUDENT_TYPES.map(t=>`<option value="${t.id}" ${state.profile.studentType===t.id?'selected':''}>${t.name}</option>`).join('')}</select>
+    </div>
+    <div class="form-group"><label>Weekly Study Hours</label><input type="number" id="set-hours" class="form-input" value="${state.profile.weeklyStudyHours}" min="1" max="80"></div>
+    <button class="btn btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i>Save Profile</button>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px"><i class="fas fa-bell" style="color:var(--accent2);margin-right:6px"></i>Notifications</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px">Get daily study reminders based on your timetable.</p>
+    <button class="btn ${state.profile.notificationsEnabled?'btn-primary':'btn-secondary'}" onclick="toggleNotifications()"><i class="fas ${state.profile.notificationsEnabled?'fa-bell-slash':'fa-bell'}"></i>${state.profile.notificationsEnabled?'Disable':'Enable'} Reminders</button>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px"><i class="fas fa-database" style="color:var(--purple);margin-right:6px"></i>Data Management</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="exportData()"><i class="fas fa-download"></i>Export Data</button>
+      <button class="btn btn-secondary" onclick="importDataPrompt()"><i class="fas fa-upload"></i>Import Data</button>
+      <button class="btn btn-danger" onclick="confirmResetData()"><i class="fas fa-trash-alt"></i>Reset All Data</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px"><i class="fas fa-wifi" style="color:var(--accent);margin-right:6px"></i>Offline Mode</h3>
+    <p style="font-size:.85rem;color:var(--muted)">StudyForge works offline once loaded. All data is stored locally in your browser. No internet required after initial setup.</p>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:var(--success)"></span><span style="font-size:.8rem;color:var(--success)">Ready for offline use</span></div>
+  </div>
+
+  <div class="card">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px"><i class="fas fa-code" style="color:var(--muted);margin-right:6px"></i>About</h3>
+    <p style="font-size:.85rem;color:var(--muted)">StudyForge v1.0 — Smart Study Planner. Built with care for students who want to study smarter, not harder.</p>
+  </div>`;
+}
+
+function saveSettings(){
+  state.profile.name=document.getElementById('set-name').value.trim()||state.profile.name;
+  state.profile.studentType=document.getElementById('set-type').value;
+  state.profile.weeklyStudyHours=Math.max(1,Math.min(80,parseInt(document.getElementById('set-hours').value)||20));
+  saveState();renderNav();renderView();toast('Settings saved','success');
+}
+
+function toggleNotifications(){
+  if(!('Notification' in window)){toast('Notifications not supported in this browser','error');return}
+  if(Notification.permission==='granted'){
+    state.profile.notificationsEnabled=!state.profile.notificationsEnabled;
+  }else if(Notification.permission!=='denied'){
+    Notification.requestPermission().then(p=>{state.profile.notificationsEnabled=p==='granted';saveState();renderView()});
+    return;
+  }else{
+    toast('Notification permission denied. Enable in browser settings.','error');return;
+  }
+  saveState();renderView();toast(state.profile.notificationsEnabled?'Reminders enabled':'Reminders disabled','info');
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='studyforge_backup.json';a.click();
+  URL.revokeObjectURL(url);toast('Data exported','success');
+}
+
+function importDataPrompt(){
+  openModal(`<h2 style="font-size:1.2rem;font-weight:800;margin-bottom:16px">Import Data</h2><div class="file-upload" onclick="document.getElementById('import-input').click()"><i class="fas fa-upload" style="display:block"></i><p style="color:var(--muted);font-size:.85rem">Upload StudyForge backup JSON</p><input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)"></div><div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button></div>`);
+}
+
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      state={...state,...data};saveState();closeModal();renderNav();renderView();toast('Data imported successfully','success');
+    }catch(er){toast('Invalid backup file','error')}
+  };reader.readAsText(file);
+}
+
+function confirmResetData(){
+  openModal(`<h2 style="font-size:1.2rem;font-weight:700;margin-bottom:12px;color:var(--danger)">Reset All Data?</h2><p style="color:var(--muted);margin-bottom:20px">This will permanently delete all your modules, timetable, sessions, and achievements. This cannot be undone.</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="resetAllData()">Reset Everything</button></div>`);
+}
+
+function resetAllData(){
+  localStorage.removeItem(STORAGE_KEY);
+  state={profile:{name:'',studentType:'',weeklyStudyHours:20,onboardingComplete:false,notificationsEnabled:false},modules:[],timetable:[],sessions:[],xp:0,level:1,streak:0,lastStudyDate:null,unlockedAchievements:[],currentView:'dashboard',colorIndex:0};
+  closeModal();showOnboarding();toast('All data has been reset','info');
+}
+
+/* ============================================================
+   DAILY REMINDERS
+============================================================ */
+function checkReminders(){
+  if(!state.profile.notificationsEnabled||!state.profile.onboardingComplete)return;
+  const day=DAYS[(new Date().getDay()+6)%7];
+  const nowMin=new Date().getHours()*60+new Date().getMinutes();
+  // Check for sessions starting in the next 15 minutes
+  state.timetable.filter(t=>t.day===day).forEach(s=>{
+    const diff=s.startMinute-nowMin;
+    if(diff>0&&diff<=15&&!s.reminded){
+      const mod=state.modules.find(m=>m.id===s.moduleId);
+      const meth=STUDY_METHODS.find(m=>m.id===s.method);
+      if(Notification.permission==='granted'){
+        new Notification('StudyForge Reminder',{body:`${mod?mod.name:'Study'} starts in ${diff} minutes. Method: ${meth?meth.name:'Study'}`,icon:'📚'});
+      }
+      s.reminded=true;
+    }
+  });
+  // Daily morning reminder
+  const h=new Date().getHours();
+  if(h===8&&new Date().getMinutes()===0&&!state.sessions.find(s=>s.date===today())){
+    if(Notification.permission==='granted'){
+      new Notification('StudyForge Daily',{body:`Good morning! Don't forget to study today. Streak: ${state.streak} days 🔥`});
+    }
+  }
+}
+setInterval(checkReminders,60000);// Check every minute
+
+/* ============================================================
+   SERVICE WORKER (Offline Support)
+============================================================ */
+function registerSW(){
+  if('serviceWorker' in navigator){
+    const swCode=`
+      const CACHE='studyforge-v1';
+      self.addEventListener('install',e=>{self.skipWaiting()});
+      self.addEventListener('activate',e=>{e.waitUntil(clients.claim())});
+      self.addEventListener('fetch',e=>{
+        e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+          if(res.ok){const c=res.clone();caches.open(CACHE).then(cache=>cache.put(e.request,c))}
+          return res;
+        }).catch(()=>new Response('Offline',{status:503})))
+      });`;
+    const blob=new Blob([swCode],{type:'application/javascript'});
+    const swUrl=URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(()=>{});
+  }
+}
+
+/* ============================================================
+   INITIALIZATION
+============================================================ */
+function init(){
+  loadState();
+  registerSW();
+
+  // Mobile toggle
+  document.getElementById('mobile-toggle').addEventListener('click',()=>{
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+  if(!state.profile.onboardingComplete){
+    showOnboarding();
+  }else{
+    renderNav();renderView();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
